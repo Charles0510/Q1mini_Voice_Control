@@ -1,65 +1,204 @@
 #ifndef KINEMATICS_H
 #define KINEMATICS_H
 
-/* Size of the robot ---------------------------------------------------------*/
-// #TODO: 
-const float length_a = 55;
-const float length_b = 77.5;
-const float length_c = 27.5;
-const float length_side = 71;
-const float z_absolute = -28;
+#include "driver.h"
 
-/* Constants for movement ----------------------------------------------------*/
-// #TODO: 
-const float z_default = -50, z_up = -30, z_boot = z_absolute;
-const float x_default = 62, x_offset = 0;
-const float y_start = 0, y_step = 40;
-const float y_default = x_default;
+float delay_time = 0.15; // delay time after move one servo
 
-/* variables for movement ----------------------------------------------------*/
-// #TODO: 
-volatile float site_now[4][3];    //real-time coordinates of the end of each leg
-volatile float site_expect[4][3]; //expected coordinates of the end of each leg
-float temp_speed[4][3];   //each axis' speed, needs to be recalculated before each movement
-float move_speed;     //movement speed
-float speed_multiple = 1; //movement speed multiple
-const float spot_turn_speed = 4;
-const float leg_move_speed = 8;
-const float body_move_speed = 3;
-const float stand_seat_speed = 1;
-volatile int rest_counter;      //+1/0.02s, for automatic rest
-//functions' parameter
-const float KEEP = 255;
-//define PI for calculation
-const float pi = 3.1415926;
+class Leg {
+  private: 
+    int num;
+    int verticalServoChannel;
+    int horizontalServoChannel;
+    Adafruit_PWMServoDriver* driverInstance; // pointer to driver board instance
 
-/* Constants for turn --------------------------------------------------------*/
-//temp length
-const float temp_a = sqrt(pow(2 * x_default + length_side, 2) + pow(y_step, 2));
-const float temp_b = 2 * (y_start + y_step) + length_side;
-const float temp_c = sqrt(pow(2 * x_default + length_side, 2) + pow(2 * y_start + y_step + length_side, 2));
-const float temp_alpha = acos((pow(temp_a, 2) + pow(temp_b, 2) - pow(temp_c, 2)) / 2 / temp_a / temp_b);
-//site for turn
-const float turn_x1 = (temp_a - length_side) / 2;
-const float turn_y1 = y_start + y_step / 2;
-const float turn_x0 = turn_x1 - temp_b * cos(temp_alpha);
-const float turn_y0 = temp_b * sin(temp_alpha) - turn_y1 - length_side;
+  public: 
+    // Constructor
+    Leg(int legNum, int legVerticalServo, int legHorizontalServo, Adafruit_PWMServoDriver* driver)
+      : driverInstance(driver),
+        verticalServoChannel(legVerticalServo), 
+        horizontalServoChannel(legHorizontalServo), 
+        driverInstance(driver) {
+    }
 
-  // RegisHsu, remote control
-  // Setup callbacks for SerialCommand commands
-  // action command 0-6,
-  // w 0 1: stand
-  // w 0 0: sit
-  // w 1 x: forward x step
-  // w 2 x: back x step
-  // w 3 x: right turn x step
-  // w 4 x: left turn x step
-  // w 5 x: hand shake x times
-  // w 6 x: hand wave x times
-  // Anuchit
-  // w 7 0: sonar_mode
-  // w 8 0: freewalk mode
-  // w 9 0: leg init
+    // lift the leg up
+    void lift(){ 
+      setServoAngle(driverInstance, legVerticalServo, 180);
+    }
 
+    // lower the leg down
+    void lower(){ 
+      setServoAngle(driverInstance, legVerticalServo, 120);
+    }
+
+    // lower the leg to lowest position, used to sit
+    void lowest(){ 
+
+    }
+
+    // move the leg to specific angle horizontally
+    void move(int angle){ 
+      setServoAngle(driver, legHorizontalServo, angle);
+    }
+
+    // lift the leg up and move, then put down
+    void lift_move(int angle){
+      setServoAngle(driverInstance, legVerticalServo, 180);
+      setServoAngle(driver, legHorizontalServo, angle);
+      etServoAngle(driverInstance, legVerticalServo, 120);
+    }
+}
+
+// below maybe defind in driver.h
+// Adafruit_PWMServoDriver pca9685 = Adafruit_PWMServoDriver(0x7F); // Address of the PCA9685 board
+
+Leg leg0(0, servoChannels[0], servoChannels[1], &pca9685); // initial legs
+Leg leg1(1, servoChannels[2], servoChannels[3], &pca9685);
+Leg leg2(2, servoChannels[4], servoChannels[5], &pca9685);
+Leg leg3(3, servoChannels[6], servoChannels[7], &pca9685);
+
+// leg0    leg1
+//     body   
+// leg3    leg2
+
+void step_forward(){
+  // Phase A
+  leg1.lift_move(120);
+  leg2.lift_move(120);
+
+  // Phase B
+  leg0.move(120);
+  leg1.move(90);
+  leg2.move(90);
+  leg3.move(120);
+
+  // Phase C
+  leg0.lift_move(60);
+  leg3.lift_move(60);
+
+  // Phase D
+  leg0.move(90);
+  leg1.move(60);
+  leg2.move(60);
+  leg3.move(90);
+
+}
+
+void turn_left(){
+  // Phase 0
+  leg0.lift_move(80);
+  leg1.lift_move(60);
+  leg2.lift_move(120);
+  leg3.lift_move(100);
+
+  // Phase A
+  leg1.lift();
+
+  leg1.move(120);
+  leg0.move(60);
+  leg3.move(80);
+  leg2.move(100);
+
+  leg1.lower();
+
+  // Phase B
+  leg0.lift();
+
+  leg0.move(120);
+  leg3.move(60);
+  leg2.move(80);
+  leg1.move(100);
+
+  leg0.lower();
+
+  // Phase C
+  leg3.lift();
+
+  leg3.move(120);
+  leg2.move(60);
+  leg1.move(80);
+  leg0.move(100);
+
+  leg3.lower();
+
+  // Phase D
+  leg2.lift();
+
+  leg2.move(120);
+  leg1.move(60);
+  leg0.move(80);
+  leg3.move(100);
+
+  leg2.lower();
+
+}
+
+void turn_right(){
+  // Phase 0
+  leg0.lift_move(120);
+  leg1.lift_move(100);
+  leg2.lift_move(80);
+  leg3.lift_move(60);
+
+  // Phase A
+  leg0.lift();
+
+  leg0.move(60);
+  leg1.move(120);
+  leg2.move(100);
+  leg3.move(80);
+
+  leg0.lower();
+
+  // Phase B
+  leg1.lift();
+
+  leg1.move(60);
+  leg2.move(120);
+  leg3.move(100);
+  leg0.move(80);
+
+  leg1.lower();
+
+  // Phase C
+  leg2.lift();
+
+  leg2.move(60);
+  leg3.move(120);
+  leg0.move(100);
+  leg1.move(80);
+
+  leg2.lower();
+
+  // Phase D
+  leg3.lift();
+
+  leg3.move(60);
+  leg0.move(120);
+  leg1.move(100);
+  leg2.move(80);
+
+  leg3.lower();
+}
+
+void sit_down(){
+  leg0.lift_move(90);
+  leg1.lift_move(90);
+  leg2.lift_move(90);
+  leg3.lift_move(90);
+
+  leg0.lowest();
+  leg1.lowest();
+  leg2.lowest();
+  leg3.lowest();
+
+}
+
+void reset(){
+  leg0.lift_move(90);
+  leg1.lift_move(90);
+  leg2.lift_move(90);
+  leg3.lift_move(90);
+}
 
 #endif
