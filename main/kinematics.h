@@ -15,47 +15,74 @@ class Leg {
   public: 
     // Constructor
     Leg(int legNum, int legVerticalServo, int legHorizontalServo, Adafruit_PWMServoDriver* driver)
-      : driverInstance(driver),
+      : num(legNum),
+        driverInstance(driver),
         verticalServoChannel(legVerticalServo), 
-        horizontalServoChannel(legHorizontalServo), 
-        driverInstance(driver) {
+        horizontalServoChannel(legHorizontalServo) {
     }
 
     // lift the leg up
     void lift(){ 
-      setServoAngle(driverInstance, legVerticalServo, 180);
+      if (num == 0 || num == 3){
+        setServoAngle(*driverInstance, verticalServoChannel, 120);
+      } else {
+        setServoAngle(*driverInstance, verticalServoChannel,  60);
+      }
     }
 
     // lower the leg down
     void lower(){ 
-      setServoAngle(driverInstance, legVerticalServo, 120);
+      if (num == 0 || num == 3){
+        setServoAngle(*driverInstance, verticalServoChannel, 150);
+        Serial.print(num);
+      } else {
+        setServoAngle(*driverInstance, verticalServoChannel, 30);
+        Serial.print(num);
+      }
+      Serial.print(num);
+      
     }
-
+ 
     // lower the leg to lowest position, used to sit
     void lowest(){ 
-
+      if (num == 0 || num == 3){
+        setServoAngle(*driverInstance, verticalServoChannel, 180);
+      } else {
+        setServoAngle(*driverInstance, verticalServoChannel, 0);
+      }
     }
 
     // move the leg to specific angle horizontally
     void move(int angle){ 
-      setServoAngle(driver, legHorizontalServo, angle);
+      setServoAngle(*driverInstance, horizontalServoChannel, angle);
     }
 
     // lift the leg up and move, then put down
     void lift_move(int angle){
-      setServoAngle(driverInstance, legVerticalServo, 180);
-      setServoAngle(driver, legHorizontalServo, angle);
-      etServoAngle(driverInstance, legVerticalServo, 120);
+      lift();
+      delay(100);
+      setServoAngle(*driverInstance, horizontalServoChannel, angle);
+      delay(100);
+      lower();
+      delay(100);
     }
-}
+
+    void lift_high(){
+      if (num == 0 || num == 3){
+        setServoAngle(*driverInstance, verticalServoChannel, 180);
+      } else {
+        setServoAngle(*driverInstance, verticalServoChannel,  0);
+      }
+    }
+};
 
 // below maybe defind in driver.h
 // Adafruit_PWMServoDriver pca9685 = Adafruit_PWMServoDriver(0x7F); // Address of the PCA9685 board
 
-Leg leg0(0, servoChannels[0], servoChannels[1], &pca9685); // initial legs
-Leg leg1(1, servoChannels[2], servoChannels[3], &pca9685);
-Leg leg2(2, servoChannels[4], servoChannels[5], &pca9685);
-Leg leg3(3, servoChannels[6], servoChannels[7], &pca9685);
+Leg leg0(0, servoChannels[1], servoChannels[0], &pca9685); // initial legs
+Leg leg1(1, servoChannels[3], servoChannels[2], &pca9685);
+Leg leg2(2, servoChannels[5], servoChannels[4], &pca9685);
+Leg leg3(3, servoChannels[7], servoChannels[6], &pca9685);
 
 // leg0    leg1
 //     body   
@@ -63,24 +90,29 @@ Leg leg3(3, servoChannels[6], servoChannels[7], &pca9685);
 
 void step_forward(){
   // Phase A
-  leg1.lift_move(120);
-  leg2.lift_move(120);
+  leg1.lift_move(135);
+  delay(100);
+  leg2.lift_move(75);
+  delay(100);
 
   // Phase B
-  leg0.move(120);
-  leg1.move(90);
-  leg2.move(90);
+  leg0.move(75);
+  leg1.move(135);
+  leg2.move(60);
   leg3.move(120);
 
   // Phase C
-  leg0.lift_move(60);
-  leg3.lift_move(60);
+  leg0.lift_move(75);
+  delay(100);
+  leg3.lift_move(135);
+  delay(100);
 
   // Phase D
-  leg0.move(90);
-  leg1.move(60);
-  leg2.move(60);
-  leg3.move(90);
+  leg0.move(60);
+  leg1.move(105);
+  leg2.move(45);
+  leg3.move(120);
+
 
 }
 
@@ -182,10 +214,14 @@ void turn_right(){
 }
 
 void sit_down(){
-  leg0.lift_move(90);
-  leg1.lift_move(90);
-  leg2.lift_move(90);
-  leg3.lift_move(90);
+  leg0.lift_move(60);
+  delay(100);
+  leg1.lift_move(120);
+  delay(100);
+  leg2.lift_move(60);
+  delay(100);
+  leg3.lift_move(120);
+  delay(100);
 
   leg0.lowest();
   leg1.lowest();
@@ -195,10 +231,14 @@ void sit_down(){
 }
 
 void reset(){
-  leg0.lift_move(90);
-  leg1.lift_move(90);
-  leg2.lift_move(90);
-  leg3.lift_move(90);
+  leg0.lift_move(60);
+  //delay(100);
+  leg1.lift_move(120);
+  //delay(100);
+  leg2.lift_move(60);
+  //delay(100);
+  leg3.lift_move(120);
+  //delay(100);
 }
 
 #endif
