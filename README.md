@@ -18,7 +18,4 @@ Arduino project explain:
  - Adafruit_BusIO-master.zip and Adafruit-PWM-Servo-Driver-Library-master.zip: necessary Arduino libraries, include to your Arduino IDE
 
 
-Author: 
-Mingcheng Kou
-Kritarth Mishra
-Daniel Heydari
+Author: Mingcheng Kou, Kritarth Mishra, Daniel Heydari
