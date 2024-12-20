@@ -1,4 +1,4 @@
-This is a project for MF2025 Project Work in Mechatronics
+This is a project for MF2025 Project Work in Mechatronics. The Q1 mini quadruped robot is controlled by voice command.
 
 Materials:
  - Two Arduino BLE 33  
@@ -9,7 +9,6 @@ Materials:
  - TinyML Arduino shield  
  - Other cables and screws to make the connections possible   
   
-The Q1 mini quadruped robot is controlled by voice command  
 
 Arduino project explain: 
  - micro_speech_final: run on the voice detection Arduino board, which detect the voice input, send result to kinematics Arduion board
